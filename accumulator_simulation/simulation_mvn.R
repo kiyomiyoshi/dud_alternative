@@ -15,12 +15,12 @@ cores <- getOption("mc.cores", detectCores())
 cl <- makeCluster(cores)
 registerDoParallel(cl)
 
-mu_d <-    0.006578723
-sigma <-   0.02352478
-tau_nd <-  0.4000000
-sigma_d <- 0.00025
+mu_d <-    0.000073
+sigma <-   0.0234
+tau_nd <-  0.334
+sigma_d <- 0.0000015
 beta <-    0.25
-theta <-   0.1525095
+theta <-   0.168
 w <-     0
 th <-    1
 
@@ -42,7 +42,7 @@ for (j in condition) {
     
     d <- foreach(i = 1:trial, .combine = "rbind", .packages = c("dplyr", "matrixStats")) %dopar% {
         
-        stimulus <- c(100, 90, j) / 100
+        stimulus <- c(100, 90, j)
         # stimulus <- stimulus / (1 + w * sum(stimulus))
         stimulus <- stimulus * dr_scaler[i, ]
         nAlt <- sum(stimulus != 0)

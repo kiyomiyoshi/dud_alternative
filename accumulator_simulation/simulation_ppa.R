@@ -15,10 +15,10 @@ cores <- getOption("mc.cores", detectCores())
 cl <- makeCluster(cores)
 registerDoParallel(cl)
 
-mu_d    <- 0.1668
-sigma <-   0.560
-tau_nd  <- 0.320
-sigma_d <- 0.0004
+mu_d    <- 0.000167
+sigma <-   0.056
+tau_nd  <- 0.32
+sigma_d <- 0.000004
 beta <-    0.4
 theta <-   0.305
 w     <-   0
@@ -42,7 +42,7 @@ for (j in condition) {
   
   d <- foreach(i = 1:trial, .combine = "rbind", .packages = c("matrixStats")) %dopar% {
     
-    stimulus <- c(100, 90, j) / 1000
+    stimulus <- c(100, 90, j)
     # stimulus <- stimulus / (1 + w * sum(stimulus))
     stimulus <- stimulus * dr_scaler[i, ]
     nAlt <- sum(stimulus != 0)
@@ -51,9 +51,9 @@ for (j in condition) {
     accum[, 1] <- c(a10[i], rep(stimulus[1], sample))
     accum[, 2] <- c(a20[i], rep(stimulus[2], sample))
     accum[, 3] <- c(a30[i], rep(stimulus[3], sample))
-    accum[-1, 1] <- accum[-1, 1] + rnorm(sample, 0, sigma / 10)
-    accum[-1, 2] <- accum[-1, 2] + rnorm(sample, 0, sigma / 10)
-    accum[-1, 3] <- accum[-1, 3] + rnorm(sample, 0, sigma / 10)
+    accum[-1, 1] <- accum[-1, 1] + rnorm(sample, 0, sigma)
+    accum[-1, 2] <- accum[-1, 2] + rnorm(sample, 0, sigma)
+    accum[-1, 3] <- accum[-1, 3] + rnorm(sample, 0, sigma)
     accum <- accum[, 1:nAlt]
     accum <- matrixStats::colCumsums(accum)
     
