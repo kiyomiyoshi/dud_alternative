@@ -1,0 +1,137 @@
+library(doParallel)
+library(tictoc)
+library(matrixStats)
+
+cores <- getOption("mc.cores", detectCores())
+cl <- makeCluster(cores)
+registerDoParallel(cl)
+
+
+# import data
+df <- recdat
+df <- na.omit(df)
+df$rt <- df$rt / 1000
+colnames(df) <- c("rt", "chosenItem", "cv", "conf", "val3", "subj")
+df$chosenItem <- ifelse(df$chosenItem == "target", 1, 
+                        ifelse(df$chosenItem == "distractor", 2, 3))
+
+
+# model fitting function
+fit_mvn <- function(dat_behav, sigma_d, beta){
+  init_par <- c(0.72, 0.24, 0.3, 0.14)
+  fit <- suppressWarnings(optim(par = init_par, fn = chisq, gr = NULL, 
+                                method = "L-BFGS-B", dat1 = dat_behav, sigma_d = sigma_d, beta = beta,
+                                lower = c(0.65, 0.2, 0.2, 0.1), upper = c(0.8, 0.3, 0.4, 0.18),
+                                control = list("maxit" = 3000, "parscale" = c(1, 0.4, 1, 1))))
+  est <- data.frame(mu_d = fit$par[1], sigma = fit$par[2], tau_nd = fit$par[3], theta = fit$par[4], chisq = fit$value, conv = fit$convergence)
+  return(est)
+}
+
+
+# objective function
+chisq <- function(par, dat1, sigma_d, beta) {
+  
+  mu_d    <- par[1]
+  sigma <-   par[2]
+  tau_nd  <- par[3]
+  theta <-   par[4]
+  # w     <- 0
+  
+  th <- 1
+  sample <- 3351
+  
+  rt_q <- c(0, quantile(dat1$rt, probs = c(0.1, 0.3, 0.5, 0.7, 0.9)), 10) # quantiles of grand data
+  
+  cond <- c(0, 27, 45, 63, 76, 86) # response frequency table
+  tab_low_list <- c()
+  tab_high_list <- c()
+  for (i in 1:6) {
+    dat_low <-  subset(dat1, dat1$conf < 1 & dat1$val3 == cond[i])
+    dat_high <- subset(dat1, dat1$conf > 0 & dat1$val3 == cond[i])
+    cuts_low <-  factor(cut(dat_low$rt,  rt_q, labels = FALSE), levels = 1:(length(rt_q) - 1))
+    cuts_high <- factor(cut(dat_high$rt, rt_q, labels = FALSE), levels = 1:(length(rt_q) - 1))
+    tab_low <- matrix(c(table(cuts_low[dat_low$chosenItem == 1]),
+                        table(cuts_low[dat_low$chosenItem == 2]),
+                        table(cuts_low[dat_low$chosenItem == 3])), nrow = 3, byrow = TRUE) + 1 # avoiding zero cells
+    tab_high <- matrix(c(table(cuts_high[dat_high$chosenItem == 1]),
+                         table(cuts_high[dat_high$chosenItem == 2]),
+                         table(cuts_high[dat_high$chosenItem == 3])), nrow = 3, byrow = TRUE) + 1 # avoiding zero cells
+    tab_low_list[[i]] <-  tab_low
+    tab_high_list[[i]] <- tab_high
+  }
+  
+  chisq_stats <- c()
+  
+  for (j in 1:6) {
+    
+    dr_scaler <- cbind(rnorm(6912 * 10, mu_d, sigma_d),
+                       rnorm(6912 * 10, mu_d, sigma_d),
+                       rnorm(6912 * 10, mu_d, sigma_d))
+    
+    a10 <- runif(6912 * 10, -beta, beta)
+    a20 <- runif(6912 * 10, -beta, beta)
+    a30 <- runif(6912 * 10, -beta, beta)
+    
+    d <- foreach(i = 1:(6912 * 10), .combine = "rbind", .packages = c("matrixStats")) %dopar% {
+      stimulus <- c(100, 90, cond[j]) / 10000
+      # stimulus <- stimulus / (1 + w * sum(stimulus))
+      stimulus <- stimulus * dr_scaler[i, ] # drift rate variability
+      nAlt <- sum(stimulus != 0)
+      
+      accum <- matrix(0, nrow = sample + 1, ncol = 3)
+      accum[, 1] <- c(a10[i], rep(stimulus[1], sample))
+      accum[, 2] <- c(a20[i], rep(stimulus[2], sample))
+      accum[, 3] <- c(a30[i], rep(stimulus[3], sample))
+      accum[-1, ] <- accum[-1, ] + matrix(rnorm(sample * 3, 0, sigma / 10), ncol = 3)
+      accum <- accum[, 1:nAlt]
+      accum <- matrixStats::colCumsums(accum)
+      
+      mvn <- matrixStats::rowOrderStats(-accum, which = 2) - matrixStats::rowOrderStats(-accum, which = 1)
+      simrt  <- which(mvn > th)[1]
+      choice <- which.max(accum[simrt, ])
+      third  <- which.max(-accum[simrt, ])
+      second <- ifelse(nAlt == 3, setdiff(c(1, 2, 3), c(choice, third)), third)
+      e_chosen_post <- ifelse(simrt <= 3000, accum[simrt + 350, choice], NA)
+      e_second_post <- ifelse(simrt <= 3000, accum[simrt + 350, second], NA)
+      cv <- 0.75 * (mvn[350] - mvn[1]) + 0.25 * ((e_chosen_post - e_second_post) - mvn[simrt])
+      c(simrt, choice, cv)
+    }
+    
+    d <- na.omit(d)
+    d[, 1] <- d[, 1] / 1000 + tau_nd
+    d <- d[d[, 1] <= 3, ]
+    sim_low <-  d[d[, 3] <= theta, ]
+    sim_high <- d[d[, 3] >  theta, ]
+    simcuts_low <-  factor(cut(sim_low[, 1],  rt_q, labels = FALSE), levels = 1:(length(rt_q) - 1))
+    simcuts_high <- factor(cut(sim_high[, 1], rt_q, labels = FALSE), levels = 1:(length(rt_q) - 1))
+    tab_sim_low <- matrix(c(table(simcuts_low[d[, 2] == 1]), 
+                            table(simcuts_low[d[, 2] == 2]), 
+                            table(simcuts_low[d[, 2] == 3])), nrow = 3, byrow = TRUE) / 10 + 1 # zero cell correction
+    tab_sim_high <- matrix(c(table(simcuts_high[d[, 2] == 1]), 
+                             table(simcuts_high[d[, 2] == 2]), 
+                             table(simcuts_high[d[, 2] == 3])), nrow = 3, byrow = TRUE) / 10 + 1 # zero cell correction
+    chisq_cond <- (tab_sim_low - tab_low_list[[j]]) ^ 2 /  tab_sim_low + 
+      (tab_sim_high - tab_high_list[[j]]) ^ 2 /  tab_sim_high
+    chisq_cond <- chisq_cond[is.finite(chisq_cond)]
+    chisq_stats <- c(chisq_stats, sum(chisq_cond))
+  }
+  
+  return(sum(chisq_stats))
+  
+}
+
+# model fit
+tic()
+
+result_mvn <- c()
+sigma_d <- c(0.005, 0.015, 0.03)
+beta <- c(0.1, 0.25, 0.4)
+for (k in sigma_d) {
+  for (l in beta) {
+    fit <- fit_mvn(dat_behav = df, sigma_d = k, beta = l)
+    result_mvn <- rbind(result_mvn, cbind(fit, k, l))
+    write.csv(result_mvn, "recovery_mvn.csv")
+  }
+}
+
+toc() # 71768.32 sec elapsed
