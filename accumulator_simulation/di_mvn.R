@@ -23,9 +23,9 @@ beta <- 0.25
 w <-  0
 th <- 1
 
-trial <- 10000
+trial <- 20000
 sample <- 3501
-condition <- c(96, 102, 108)
+condition <- c(92, 96, 100)
 simdat <- c()
 
 tic()
@@ -104,7 +104,7 @@ simdat %>%
     ggplot() + geom_line(aes(x = condition, y = p, color = factor(choice))) + ylab("Choice proportion") +
     theme(legend.position = c(.65, .5), legend.background = element_rect(fill = NA, colour = NA)) + xlab("Target value") +
     scale_color_discrete(labels = c("target", "distractor")) + labs(color = NULL) +
-    scale_x_continuous(breaks = c(96, 102, 108)) + scale_color_npg() -> p2
+    scale_x_continuous(breaks = c(92, 96, 100)) + scale_color_npg() -> p2
 
 # mean RT
 simdat %>%
@@ -113,7 +113,7 @@ simdat %>%
     ggplot() + geom_line(aes(x = condition, y = mean_rt, color = factor(choice))) +
     scale_color_discrete(labels = c("target", "distractor")) + labs(color = "choice") +
     xlab("Target value") + ylab("Mean RT (s)") + ylim(0.9, 1.2) + 
-    scale_x_continuous(breaks = c(96, 102, 108)) + scale_color_npg() -> p3
+    scale_x_continuous(breaks = c(92, 96, 100)) + scale_color_npg() -> p3
 
 # mean confidence
 simdat %>%
@@ -122,8 +122,8 @@ simdat %>%
     ggplot() + geom_line(aes(x = condition, y = mean_ec, color = factor(choice))) +
     scale_color_discrete(labels = c("target", "distractor")) + labs(color = "choice") +
     xlab("Target value") + ylab("Early-stage MVN") + 
-    scale_x_continuous(breaks = c(90, 100, 110)) + 
-    scale_y_continuous(breaks = c(0.3, 0.4, 0.5), limits = c(0.3, 0.5)) +
+    scale_x_continuous(breaks = c(92, 96, 100)) + 
+    scale_y_continuous(breaks = c(0.35, 0.4, 0.45), limits = c(0.35, 0.45)) +
     scale_color_npg() -> p4
 
 simdat %>%
@@ -132,7 +132,7 @@ simdat %>%
     ggplot() + geom_line(aes(x = condition, y = mean_pc, color = factor(choice))) +
     scale_color_discrete(labels = c("target", "distractor")) + labs(color = "choice") +
     xlab("Target value") + ylab("Post-decisional MVN") + 
-    scale_x_continuous(breaks = c(96, 102, 108)) + scale_color_npg() -> p5
+    scale_x_continuous(breaks = c(92, 96, 100)) + scale_color_npg() -> p5
 
 
 figure_di_mvn <- cowplot::plot_grid(p2 + scale_color_npg() +

@@ -24,7 +24,7 @@ theta <-   0.305
 w     <-   0
 th    <-  -0.1 # should be negative
 
-trial <- 20000
+trial <- 50000
 sample <- 3501
 condition <- c(0, 27, 45, 63, 76, 86)
 simdat <- c()
