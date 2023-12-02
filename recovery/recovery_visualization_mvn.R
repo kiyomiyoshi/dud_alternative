@@ -37,7 +37,7 @@ g10 <- pivot_longer(win, cols = c("mu_d", "sigma", "sigma_d", "tau_nd", "beta", 
     theme(axis.text.x  = element_text(size = 7))
 
 #'# 
-files <- dir("7", ".*csv$", full.names = TRUE) 
+files <- dir("5", ".*csv$", full.names = TRUE) 
 dat <- c()
 win <- c()
 for (i in 1:length(files)) {
@@ -54,7 +54,7 @@ true_value <- data.frame(value = c(0.76, 0.23, 0.025, 0.36, 0.4, 0.18),
                          name = c("mu_d", "sigma", "sigma_d", "tau_nd", "beta", "theta"))
 win <- select(win, mu_d, sigma, sigma_d, tau_nd, beta, theta)
 
-g7 <- pivot_longer(win, cols = c("mu_d", "sigma", "sigma_d", "tau_nd", "beta", "theta")) %>%
+g5 <- pivot_longer(win, cols = c("mu_d", "sigma", "sigma_d", "tau_nd", "beta", "theta")) %>%
     ggplot() + geom_jitter(aes(x = name, y = value, color = name), width = 0.2, height = 0) +
     geom_point(true_value, mapping = aes(x = name, y = value), shape = 4, size = 3) +
     scale_x_discrete(limits = c("sigma", "mu_d", "sigma_d", "beta", "tau_nd", "theta"),
@@ -64,13 +64,13 @@ g7 <- pivot_longer(win, cols = c("mu_d", "sigma", "sigma_d", "tau_nd", "beta", "
                                 expression(bold(paste(β))),
                                 expression(bold(paste(τ[nd]))),
                                 expression(bold(paste(θ))))) + 
-    ggtitle(expression(paste(italic("SD"), " = mean/7"))) +
+    ggtitle(expression(paste(italic("SD"), " = mean/5"))) +
     xlab("") + ylab("Estimated value") + ylim(0, 0.8) + guides(color = FALSE) +
     theme(axis.text.x  = element_text(size = 7))
 
 
 #'#
-g <- cowplot::plot_grid(g10, g7,
+g <- cowplot::plot_grid(g10, g5,
                         labels = c("a", "b"), label_size = 10, nrow = 1)
 g
-save_plot("recovery_mvn.jpg", g, dpi = 600)
+sjPlot::save_plot("recovery_mvn.jpg", g, dpi = 600)

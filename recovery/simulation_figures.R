@@ -15,13 +15,13 @@ cores <- getOption("mc.cores", detectCores())
 cl <- makeCluster(cores)
 registerDoParallel(cl)
 
-Mu_d  <-   list(rep(0.0073, 24),  rnorm(24, 0.0073, 0.0073 / 10),   rnorm(24, 0.0073, 0.0073 / 7))
-Sigma <-   list(rep(0.023, 24),   rnorm(24, 0.023, 0.023 / 10),     rnorm(24, 0.023, 0.023 / 7))
-Tau_nd <-  list(rep(0.33, 24),    rnorm(24, 0.33, 0.33 / 10),       rnorm(24, 0.33, 0.33 / 7))
-Sigma_d <- list(rep(0.00015, 24), rnorm(24, 0.00015, 0.00015 / 10), rnorm(24, 0.00015, 0.00015 / 7))
-Beta <-    list(rep(0.25, 24),    rnorm(24, 0.25, 0.25 / 10),       rnorm(24, 0.25, 0.25 / 7))
-Theta <-   list(rep(0.17, 24),    rnorm(24, 0.17, 0.17 / 10),       rnorm(24, 0.17, 0.17 / 7))
-Weight <-  list(rep(0.75, 24),    rnorm(24, 0.75, 0.75 / 10),       rnorm(24, 0.75, 0.75 / 7))
+Mu_d  <-   list(rep(0.0073, 24),  rnorm(24, 0.0073, 0.0073 / 10),   rnorm(24, 0.0073, 0.0073 / 5))
+Sigma <-   list(rep(0.023, 24),   rnorm(24, 0.023, 0.023 / 10),     rnorm(24, 0.023, 0.023 / 5))
+Tau_nd <-  list(rep(0.33, 24),    rnorm(24, 0.33, 0.33 / 10),       rnorm(24, 0.33, 0.33 / 5))
+Sigma_d <- list(rep(0.00015, 24), rnorm(24, 0.00015, 0.00015 / 10), rnorm(24, 0.00015, 0.00015 / 5))
+Beta <-    list(rep(0.25, 24),    rnorm(24, 0.25, 0.25 / 10),       rnorm(24, 0.25, 0.25 / 5))
+Theta <-   list(rep(0.17, 24),    rnorm(24, 0.17, 0.17 / 10),       rnorm(24, 0.17, 0.17 / 5))
+Weight <-  list(rep(0.75, 24),    rnorm(24, 0.75, 0.75 / 10),       rnorm(24, 0.75, 0.75 / 5))
 
 th <-    1
 trial <-  288
@@ -96,8 +96,6 @@ for (l in 1:3) {
 }
 toc()
 
-3*24*6*288
-table(recdat$iteration)
 
 #'# visualization
 df <- read.csv("exp1_data_behavior.csv", header = TRUE)
@@ -134,7 +132,7 @@ recdat %>%
     ggplot() +
     geom_freqpoly(aes(color = factor(iteration), linetype = factor(iteration),
                       x = rt, y = after_stat(count / nrow(recdat) * 3 * nrow(df)))) +
-    scale_color_discrete(labels = c("0", "mean / 10", "mean / 7")) +
+    scale_color_discrete(labels = c("0", "mean/10", "mean/5")) +
     xlab("RT (s)") + ylab("Count") + guides(linetype = FALSE) + labs(color = "SD") +
     scale_x_continuous(breaks = c(0, 1000, 2000, 3000), labels = c("0", "1", "2", "3")) +
     facet_wrap(. ~ factor(condition) + factor(choice), nrow = 3) +
@@ -177,12 +175,12 @@ recdat %>%
     mutate_all(~replace(., is.na(.), 0)) %>%
     ggplot() + geom_line(aes(x = condition, y = p, color = factor(choice), linetype = factor(iteration))) + ylab("Choice proportion") +
     scale_color_discrete(labels = c("target", "distractor", "dud")) + labs(color = "Choice", linetype = "SD") +
-    theme(legend.text = element_text(size = 5),
-          legend.position = c(.5, .63), 
+    theme(legend.text = element_text(size = 7.1),
+          legend.position = "bottom", 
           legend.direction = "horizontal",
           legend.background = element_rect(fill = NA, colour = NA),
           legend.key = element_rect(fill = NA)) +
-    scale_linetype_discrete(labels = c("0", "mean / 10", "mean / 7")) + xlab("Dud value") +
+    scale_linetype_discrete(labels = c("0", "mean/10", "mean/5")) + xlab("Dud value") +
     scale_x_continuous(breaks = c(0, 27, 45, 63, 76, 86)) + ylim(0, 0.8) + scale_color_npg() -> p3
 p3
 
@@ -204,7 +202,7 @@ recdat %>%
     geom_point(emp3, size = 0.8, mapping = aes(x = condition, y = mean_r)) +
     scale_x_continuous(breaks = c(0, 27, 45, 63, 76, 86)) + ylim(3, 5) + xlab("Dud value") +
     theme(legend.position = c(.25, .8), legend.background = element_rect(fill = NA, colour = NA)) + 
-    guides(linetype = guide_legend(title = "SD")) + scale_color_discrete(labels = c("0", "μ / 10", "μ / 7")) +
+    guides(linetype = guide_legend(title = "SD")) + scale_color_discrete(labels = c("0", "mean/10", "mean/5")) +
     ylab("Pc(target) / Pc(distractor)") -> p4
 p4
 
@@ -215,7 +213,7 @@ recdat %>%
     ggplot() + geom_line(aes(x = condition, y = r, linetype = factor(iteration))) + 
     scale_x_continuous(breaks = c(0, 27, 45, 63, 76, 86)) + ylim(3, 5) + xlab("Dud value") +
     theme(legend.position = c(.25, .8), legend.background = element_rect(fill = NA, colour = NA)) + 
-    guides(linetype = guide_legend(title = "SD")) + scale_linetype_discrete(labels = c("0", "μ / 10", "μ / 7")) +
+    guides(linetype = guide_legend(title = "SD")) + scale_linetype_discrete(labels = c("0", "mean/10", "mean/5")) +
     ylab("Pc(target) / Pc(distractor)") +
     theme(legend.text = element_text(size = 7),
           legend.position = c(.5, .7), 
@@ -250,7 +248,7 @@ recdat %>%
     ggplot() + geom_line(aes(x = condition, y = high_conf, color = factor(choice), linetype = factor(iteration))) +
     scale_color_discrete(labels = c("target", "distractor", "dud")) + labs(color = "choice") +
     scale_x_continuous(breaks = c(0, 27, 45, 63, 76, 86)) + xlab("Dud value") +
-    scale_y_continuous(breaks = c(0, 0.25, 0.5, 0.75), limits = c(0, 0.75)) +
+    scale_y_continuous(breaks = c(0.25, 0.5, 0.75), limits = c(0.25, 0.75)) +
     guides(linetype = FALSE, color = FALSE) +
     ylab("High confidence rate") + scale_color_npg() -> p7
 p7
@@ -258,6 +256,8 @@ p7
 
 # save figures
 legend <- get_legend(p3 + guides(color = guide_legend(nrow = 1)) + theme(legend.position = "bottom"))
+    
+
 g <- cowplot::plot_grid(p3 + guides(linetype = F, color = F), 
                         p5 + guides(linetype = F), 
                         p6 + guides(color = F),
@@ -266,5 +266,5 @@ g <- cowplot::plot_grid(p3 + guides(linetype = F, color = F),
 g <- cowplot::plot_grid(g, legend, ncol = 1, rel_heights = c(1, .1))
 g
 
-save_plot("simulated_rt.jpg", p2, dpi = 600)
-save_plot("simulated_behavior.jpg", g, dpi = 600)
+sjPlot::save_plot("simulated_rt.jpg", p2, dpi = 600)
+sjPlot::save_plot("simulated_behavior.jpg", g, dpi = 600)
