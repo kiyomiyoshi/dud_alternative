@@ -1,0 +1,2 @@
+main_experiment/simdat_mvn_2afc.csv filter=lfs diff=lfs merge=lfs -text
+main_experiment/simdat_mvn_2afc.zip filter=lfs diff=lfs merge=lfs -text
